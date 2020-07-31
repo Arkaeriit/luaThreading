@@ -4,6 +4,7 @@
 #include <lualib.h>
 #include <lauxlib.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 typedef struct stateGenerator_struct {
     int numberOfFiles,
@@ -13,7 +14,8 @@ typedef struct stateGenerator_struct {
 } stateGenerator;
 
 stateGenerator* lsg_init(int numberOfFiles, const char** files, int numberOfFunc, const void* functions);
-lua_State* lsg_make_state(stateGenerator* sg);
+lua_State* lsg_makeState(stateGenerator* sg);
+lua_State* lsg_regenState(lua_State* L);
 
 #endif
 

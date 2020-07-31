@@ -9,7 +9,7 @@ stateGenerator* lsg_init(int numberOfFiles, const char** files, int numberOfFunc
     return ret;
 }
 
-lua_State* lsg_make_state(stateGenerator* sg){
+lua_State* lsg_makeState(stateGenerator* sg){
     lua_State* ret;
     ret = luaL_newstate();
     luaL_openlibs(ret);
@@ -20,6 +20,14 @@ lua_State* lsg_make_state(stateGenerator* sg){
         fnc = sg->functions[i];
         fnc(ret);
     }
+    lua_pushinteger(ret, (uint64_t) sg);
+    lua_setglobal(ret, "STATE_GENERATOR");
     return ret;
+}
+
+lua_State* lsg_regenState(lua_State* L){
+    lua_getglobal(L, "STATE_GENERATOR");
+    stateGenerator* sg = (stateGenerator*) lua_tointeger(L,1);
+    return lsg_makeState(sg);
 }
 
