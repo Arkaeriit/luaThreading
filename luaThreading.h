@@ -7,8 +7,9 @@
 #include <stdint.h>
 #include "luaStateGen.h"
 
-int lt_runFunc(luaState* L);
+int lt_runFunc(lua_State* L);
 
+void lt_include(lua_State* L);
 
 
 #endif

@@ -6,14 +6,15 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+typedef void (*include_fnc)(lua_State* L);
+
 typedef struct stateGenerator_struct {
-    int numberOfFiles,
-    const char** files, //Use of const in order not to wory about freeing or anything
-    int numberOfFunc,
-    const void* functions,
+    int numberOfFiles;
+    const char** files; //Use of const in order not to wory about freeing or anything
+    include_fnc function;
 } stateGenerator;
 
-stateGenerator* lsg_init(int numberOfFiles, const char** files, int numberOfFunc, const void* functions);
+stateGenerator* lsg_init(int numberOfFiles, const char** files, include_fnc function);
 lua_State* lsg_makeState(stateGenerator* sg);
 lua_State* lsg_regenState(lua_State* L);
 

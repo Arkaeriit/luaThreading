@@ -1,11 +1,10 @@
 #include "luaStateGen.h"
 
-stateGenerator* lsg_init(int numberOfFiles, const char** files, int numberOfFunc, const void* functions){
-    stateGenerator* ret = malloc(sizeof(stateGenerator_struct));
+stateGenerator* lsg_init(int numberOfFiles, const char** files, include_fnc function){
+    stateGenerator* ret = malloc(sizeof(struct stateGenerator_struct));
     ret->numberOfFiles = numberOfFiles;
     ret->files = files;
-    ret->numberOfFunc = numberOfFunc;
-    ret->functions = functions;
+    ret->function = function;
     return ret;
 }
 
@@ -15,11 +14,9 @@ lua_State* lsg_makeState(stateGenerator* sg){
     luaL_openlibs(ret);
     for(int i=0; i<sg->numberOfFiles; i++)
         luaL_dofile(ret, sg->files[i]);
-    for(int i=0; i<sg->numberOfFunc; i++){
-        void (*fnc)(lua_State*);
-        fnc = sg->functions[i];
-        fnc(ret);
-    }
+    include_fnc fnc;
+    fnc = sg->function;
+    fnc(ret);
     lua_pushinteger(ret, (uint64_t) sg);
     lua_setglobal(ret, "STATE_GENERATOR");
     return ret;
