@@ -8,6 +8,8 @@ stateGenerator* lsg_init(int numberOfFiles, const char** files, include_fnc func
     return ret;
 }
 
+#include <stdio.h>
+#include <inttypes.h>
 lua_State* lsg_makeState(stateGenerator* sg){
     lua_State* ret;
     ret = luaL_newstate();
@@ -24,7 +26,8 @@ lua_State* lsg_makeState(stateGenerator* sg){
 
 lua_State* lsg_regenState(lua_State* L){
     lua_getglobal(L, "STATE_GENERATOR");
-    stateGenerator* sg = (stateGenerator*) lua_tointeger(L,1);
+    uint64_t addr = lua_tointeger(L,-1);
+    stateGenerator* sg = (stateGenerator*) addr;
     return lsg_makeState(sg);
 }
 

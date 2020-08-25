@@ -1,10 +1,11 @@
-FLAGS = -Wall -Werror
+FLAGS = -Wall -Werror -g
 LUA = -llua -lm -ldl 
+PT = -lpthread
 
 all : test.bin
 
 test.bin : test.o luaStateGen.o luaThreading.o
-	gcc test.o luaStateGen.o luaThreading.o $(FLAGS) $(LUA) -o test.bin
+	gcc test.o luaStateGen.o luaThreading.o $(FLAGS) $(LUA) $(PT) -o test.bin
 
 test.o : test.c
 	gcc -c test.c $(FLAGS) -o test.o
