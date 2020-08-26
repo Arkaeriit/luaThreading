@@ -4,7 +4,7 @@
 #include <lualib.h>
 #include <lauxlib.h>
 #include <stdlib.h>
-#include <stdint.h>
+#include <inttypes.h>
 
 typedef void (*include_fnc)(lua_State* L);
 

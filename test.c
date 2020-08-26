@@ -10,6 +10,7 @@ int main(){
     lua_getglobal(L, "main");
     lua_call(L, 0, 0);
     lua_close(L);
+    free(sg);
     return 0;
 }
 

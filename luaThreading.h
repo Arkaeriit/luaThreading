@@ -8,13 +8,15 @@
 #include <pthread.h>
 #include "luaStateGen.h"
 
-struct lt_threaded_args{
+struct lt_threaded_thread{
     lua_State* state;
     const char* func;
+    pthread_t* thread;
 };
 
 int lt_runFunc(lua_State* L);
 void* lt_threaded(void* args);
+int lt_closeThread(lua_State* L);
 void lt_include(lua_State* L);
 
 

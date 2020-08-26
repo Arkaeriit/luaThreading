@@ -8,8 +8,6 @@ stateGenerator* lsg_init(int numberOfFiles, const char** files, include_fnc func
     return ret;
 }
 
-#include <stdio.h>
-#include <inttypes.h>
 lua_State* lsg_makeState(stateGenerator* sg){
     lua_State* ret;
     ret = luaL_newstate();
