@@ -17,6 +17,7 @@ typedef struct stateGenerator_struct {
 stateGenerator* lsg_init(int numberOfFiles, const char** files, include_fnc function);
 lua_State* lsg_makeState(stateGenerator* sg);
 lua_State* lsg_regenState(lua_State* L);
+void lsg_purge(lua_State* L);
 
 #endif
 

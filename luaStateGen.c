@@ -29,3 +29,11 @@ lua_State* lsg_regenState(lua_State* L){
     return lsg_makeState(sg);
 }
 
+void lsg_purge(lua_State* L){
+    lua_getglobal(L, "STATE_GENERATOR");
+    uint64_t addr = lua_tointeger(L,-1);
+    stateGenerator* sg = (stateGenerator*) addr;
+    free(sg);
+    lua_close(L);
+}
+

@@ -9,8 +9,7 @@ int main(){
     lua_State* L = lsg_makeState(sg);
     lua_getglobal(L, "main");
     lua_call(L, 0, 0);
-    lua_close(L);
-    free(sg);
+    lsg_purge(L);
     return 0;
 }
 
