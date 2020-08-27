@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <pthread.h>
-#include "luaStateGen.h"
 
 struct lt_threaded_thread{
     lua_State* state;

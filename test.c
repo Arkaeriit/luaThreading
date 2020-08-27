@@ -4,12 +4,13 @@
 #include <lauxlib.h>
 
 int main(){
-    const char* files = "exp.lua";
-    stateGenerator* sg = lsg_init(1, &files, lt_include);
-    lua_State* L = lsg_makeState(sg);
+    lua_State* L = luaL_newstate();
+    luaL_openlibs(L);
+    lt_include(L);
+    luaL_dofile(L, "exp.lua");
     lua_getglobal(L, "main");
     lua_call(L, 0, 0);
-    lsg_purge(L);
+    lua_close(L);
     return 0;
 }
 
