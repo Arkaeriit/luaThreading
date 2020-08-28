@@ -1,7 +1,7 @@
 #include "luaThreading.h"
 
 /*
- * Used to create the createThread lua function which take the name of
+ * Used to create the launchThread lua function which take the name of
  * a function as argument a return a thread object
  * WIP
  */
@@ -54,8 +54,9 @@ int lt_closeThread(lua_State* L){
 }
 
 void lt_include(lua_State* L){
+    luaL_dofile(L, "luaThreading.lua");
     lua_pushcfunction(L, lt_runFunc);
-    lua_setglobal(L, "createThread");
+    lua_setglobal(L, "_launchThread");
     lua_pushcfunction(L, lt_closeThread);
     lua_setglobal(L, "joinThread");
 }
