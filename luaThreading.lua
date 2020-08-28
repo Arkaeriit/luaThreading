@@ -7,8 +7,8 @@ launchThread = function(func, ...)
     local args = table.pack(...);
     if args.n == 0 then
         LUATHREAD_INTERNAL_FUNCTION = func
-    elseif args.n == 1 then
-        LUATHREAD_INTERNAL_FUNCTION = function() func(args[1]) end
+    else
+        LUATHREAD_INTERNAL_FUNCTION = function() func(table.unpack(args)) end
     end
     return _launchThread("LUATHREAD_INTERNAL_FUNCTION")
 end

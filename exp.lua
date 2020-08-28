@@ -4,8 +4,11 @@ myprint = function()
     os.execute("sleep 1")
 end
 
-mynewprint = function(str)
+mynewprint = function(str, str2)
     print(str)
+    if(str2) then
+        print(str2)
+    end
 end
 
 main = function()
@@ -29,7 +32,7 @@ main = function()
         joinThread(t)
     end
     globfnc()
-    local thread = launchThread(mynewprint, "welcome back")
+    local thread = launchThread(mynewprint, "welcome back", "we missed you")
     joinThread(thread)
 end
 
