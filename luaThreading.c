@@ -5,7 +5,7 @@
  * a function as argument a return a thread object
  */
 int lt_runFunc(lua_State* L){
-    const char* func = luaL_checkstring(L, 1);
+    const char* func = luaL_checkstring(L, -1);
     lua_State* copy = lua_newthread(L);
     //Creating arguments
     struct lt_threaded_thread* lt_thread =  malloc(sizeof(struct lt_threaded_thread));
@@ -33,7 +33,7 @@ int lt_runFunc(lua_State* L){
 void* lt_threaded(void* args){
     struct lt_threaded_thread* lt_args = args;
     lua_getglobal(lt_args->state, lt_args->func);
-    lua_call(lt_args->state, 0, 1);
+    lua_call(lt_args->state, 0, -1);
     return NULL;
 }    
 
@@ -43,7 +43,7 @@ void* lt_threaded(void* args){
  * Return the result of the function callded when lauching the thread.
  */
 int lt_closeThread(lua_State* L){
-    struct lt_threaded_thread* lt_thread = (struct lt_threaded_thread*) lua_tointeger(L, 1);
+    struct lt_threaded_thread* lt_thread = (struct lt_threaded_thread*) lua_tointeger(L, -1);
     //Closing the thread
     pthread_join(*(lt_thread->thread), NULL);
     //Puting the result value
@@ -98,6 +98,31 @@ void lt_swapElem(lua_State* from, lua_State* to){
                 lua_CFunction func = lua_tocfunction(from, -1);
                 lua_pushcfunction(to, func);
             }
+            break;
+        case LUA_TTABLE:
+            lua_getglobal(from, "LUATHREAD_TABLE_DETAIL");
+            lua_insert(from, -2);
+            lua_call(from, 1, 1);
+            lua_geti(from, -1, 0);
+            int numberOfKeys = lua_tointeger(from, -1);
+            lua_pop(from, 1);
+            lua_createtable (to, numberOfKeys, numberOfKeys);
+            for(int i=1; i<=numberOfKeys; i++){
+                lua_geti(from, -1, i);
+                //putting the key in the receiving table
+                lua_pushstring(from, "key");
+                lua_gettable(from, -2); 
+                lt_swapElem(from, to);
+                //putting the value
+                lua_pop(from, 1);
+                lua_pushstring(from, "value");
+                lua_gettable(from, -2); 
+                lt_swapElem(from, to);
+                //associating and cleaning
+                lua_settable(to, -3);
+                lua_pop(from, 2);
+            }
+            lua_pop(from, 1);
             break;
         default:
             fprintf(stderr, "Error: unknow or invalid type on top of a stack.\n");
