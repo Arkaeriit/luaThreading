@@ -14,6 +14,10 @@ mynewprint = function(str, str2)
     end
 end
 
+identity = function(arg)
+    return arg
+end
+
 main = function()
     local threads = {}
     for i=1,4 do
@@ -37,5 +41,12 @@ main = function()
     globfnc()
     local thread = launchThread(mynewprint, "welcome back", "we missed you")
     print(joinThread(thread))
+    for k,v in pairs({"str", 42, false, 6.6, nil, _launchThread}) do
+        local thread = launchThread(identity, v)
+        local res = joinThread(thread)
+        if(v ~= res) then
+            print("Error in copy")
+        end
+    end
 end
 

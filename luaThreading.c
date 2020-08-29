@@ -80,8 +80,27 @@ void lt_swapElem(lua_State* from, lua_State* to){
                 lua_pushnumber(to, n);
             }
             break;
+        case LUA_TBOOLEAN:
+            lua_pushboolean(to, lua_toboolean(from, -1));
+            break;
+        case LUA_TSTRING:
+            lua_pushstring(to, lua_tostring(from, -1));
+            break;
+        case LUA_TUSERDATA:
+        case LUA_TLIGHTUSERDATA:
+            lua_pushlightuserdata(to, lua_touserdata(from, -1));
+            break;
+        /*case LUA_TTHREAD: //Invalid: must find a good way to do so
+            lua_pushthread(to, lua_tothread(from, -1));
+            break;*/
+        case LUA_TFUNCTION:
+            if(lua_iscfunction(from, -1)){
+                lua_CFunction func = lua_tocfunction(from, -1);
+                lua_pushcfunction(to, func);
+            }
+            break;
         default:
-            fprintf(stderr, "Error: unknow type on top of a stack.\n");
+            fprintf(stderr, "Error: unknow or invalid type on top of a stack.\n");
     }
 }
 
