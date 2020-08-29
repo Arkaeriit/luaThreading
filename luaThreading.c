@@ -1,10 +1,32 @@
+//Includes
 #include "luaThreading.h"
+#include <lualib.h>
+#include <lauxlib.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <pthread.h>
+#include <stdbool.h>
+
+//Types definitions
+struct lt_threaded_thread{
+    lua_State* state;
+    const char* func;
+    pthread_t* thread;
+};
+
+//static functions definitions
+static int lt_runFunc(lua_State* L);
+static void* lt_threaded(void* args);
+static int lt_closeThread(lua_State* L);
+static void lt_swapElem(lua_State* from, lua_State* to);
+
+//Function code
 
 /*
  * Used to create the launchThread lua function which take the name of
  * a function as argument a return a thread object
  */
-int lt_runFunc(lua_State* L){
+static int lt_runFunc(lua_State* L){
     const char* func = luaL_checkstring(L, -1);
     lua_State* copy = lua_newthread(L);
     //Creating arguments
@@ -30,7 +52,7 @@ int lt_runFunc(lua_State* L){
  *  return:
  *      NULL
  */
-void* lt_threaded(void* args){
+static void* lt_threaded(void* args){
     struct lt_threaded_thread* lt_args = args;
     lua_getglobal(lt_args->state, lt_args->func);
     lua_call(lt_args->state, 0, -1);
@@ -42,7 +64,7 @@ void* lt_threaded(void* args){
  * argument, join it and close the lua_State it ran on.
  * Return the result of the function callded when lauching the thread.
  */
-int lt_closeThread(lua_State* L){
+static int lt_closeThread(lua_State* L){
     struct lt_threaded_thread* lt_thread = lua_touserdata(L, -1);
     //Closing the thread
     pthread_join(*(lt_thread->thread), NULL);
@@ -64,7 +86,7 @@ int lt_closeThread(lua_State* L){
  *      an error message is printed, the program continues with a nil
  *      pushed on the receiving stack
  */
-void lt_swapElem(lua_State* from, lua_State* to){
+static void lt_swapElem(lua_State* from, lua_State* to){
     int type = lua_type(from, -1);
     /*fprintf(stdout, "types : %i; nil : %i, is nill : %i\n",type, LUA_TNIL, type == LUA_TNIL);*/
     switch(type){
