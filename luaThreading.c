@@ -16,7 +16,7 @@ int lt_runFunc(lua_State* L){
 	pthread_create(thread, NULL, lt_threaded, (void *) lt_thread);
     //Returnung the thread
     lt_thread->thread = thread;
-    lua_pushinteger(L, (uint64_t) lt_thread);
+    lua_pushlightuserdata(L, lt_thread);
     return 1;
 }
 
@@ -43,7 +43,7 @@ void* lt_threaded(void* args){
  * Return the result of the function callded when lauching the thread.
  */
 int lt_closeThread(lua_State* L){
-    struct lt_threaded_thread* lt_thread = (struct lt_threaded_thread*) lua_tointeger(L, -1);
+    struct lt_threaded_thread* lt_thread = lua_touserdata(L, -1);
     //Closing the thread
     pthread_join(*(lt_thread->thread), NULL);
     //Puting the result value

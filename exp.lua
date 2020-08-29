@@ -59,6 +59,7 @@ main = function()
     end
     globfnc()
     local thread = launchThread(mynewprint, "welcome back", "we missed you")
+    print(type(thread), thread)
     print(joinThread(thread))
     for k,v in pairs({"str", 42, false, 6.6, nil, _launchThread, {"str", 55, {1, 2, 3}}} ) do
         local thread = launchThread(identity, v)
