@@ -8,6 +8,9 @@ mynewprint = function(str, str2)
     print(str)
     if(str2) then
         print(str2)
+        return 2
+    else
+        return 1
     end
 end
 
@@ -33,6 +36,6 @@ main = function()
     end
     globfnc()
     local thread = launchThread(mynewprint, "welcome back", "we missed you")
-    joinThread(thread)
+    print(joinThread(thread))
 end
 

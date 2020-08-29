@@ -3,7 +3,6 @@
 /*
  * Used to create the launchThread lua function which take the name of
  * a function as argument a return a thread object
- * WIP
  */
 int lt_runFunc(lua_State* L){
     const char* func = luaL_checkstring(L, 1);
@@ -34,23 +33,56 @@ int lt_runFunc(lua_State* L){
 void* lt_threaded(void* args){
     struct lt_threaded_thread* lt_args = args;
     lua_getglobal(lt_args->state, lt_args->func);
-    lua_call(lt_args->state, 0, 0);
+    lua_call(lt_args->state, 0, 1);
     return NULL;
 }    
 
 /*
  * Used to create the joinThread lua function. Take a thread as an
  * argument, join it and close the lua_State it ran on.
- * WIP
+ * Return the result of the function callded when lauching the thread.
  */
 int lt_closeThread(lua_State* L){
     struct lt_threaded_thread* lt_thread = (struct lt_threaded_thread*) lua_tointeger(L, 1);
     //Closing the thread
     pthread_join(*(lt_thread->thread), NULL);
+    //Puting the result value
+    lt_swapElem(lt_thread->state, L);
     //Freeing everyone
     free(lt_thread->thread);
     free(lt_thread);
-    return 0;
+    return 1;
+}
+
+/*
+ * Push the element at the top of a lua_State to an other lua_State
+ *  Arguments:
+ *      from : The state we take an element from
+ *      to : the state we put the element on
+ *  error:
+ *      If the type on the element on the stack can not be determined,
+ *      an error message is printed, the program continues with a nil
+ *      pushed on the receiving stack
+ */
+void lt_swapElem(lua_State* from, lua_State* to){
+    int type = lua_type(from, -1);
+    /*fprintf(stdout, "types : %i; nil : %i, is nill : %i\n",type, LUA_TNIL, type == LUA_TNIL);*/
+    switch(type){
+        case LUA_TNIL:
+            lua_pushnil(to);
+            break;
+        case LUA_TNUMBER:
+            if(lua_isinteger(from, -1)){
+                lua_Integer i = lua_tointeger(from, -1);
+                lua_pushinteger(to, i);
+            }else{
+                lua_Number n = lua_tonumber(from, -1);
+                lua_pushnumber(to, n);
+            }
+            break;
+        default:
+            fprintf(stderr, "Error: unknow type on top of a stack.\n");
+    }
 }
 
 void lt_include(lua_State* L){
