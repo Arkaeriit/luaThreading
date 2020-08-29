@@ -114,15 +114,13 @@ void lt_swapElem(lua_State* from, lua_State* to){
                 lua_gettable(from, -2); 
                 lt_swapElem(from, to);
                 //putting the value
-                lua_pop(from, 1);
                 lua_pushstring(from, "value");
-                lua_gettable(from, -2); 
+                lua_gettable(from, -3); 
                 lt_swapElem(from, to);
                 //associating and cleaning
                 lua_settable(to, -3);
-                lua_pop(from, 2);
+                lua_pop(from, 3);
             }
-            lua_pop(from, 1);
             break;
         default:
             fprintf(stderr, "Error: unknow or invalid type on top of a stack.\n");
