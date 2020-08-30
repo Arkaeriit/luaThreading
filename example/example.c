@@ -1,4 +1,4 @@
-#include "luaThreading.h"
+#include <luaThreading.h>
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
