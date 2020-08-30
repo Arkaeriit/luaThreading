@@ -1,5 +1,4 @@
 FLAGS = -Wall -Werror -g
-LUA = -llua -lm -ldl 
 PT = -lpthread
 LIBPATH = /usr/lib64
 INCLUDEPATH = /usr/include

@@ -1,6 +1,6 @@
+LUA = -llua -lm -ldl 
 FLAGS = -Wall -Werror -g
 LUATHREAD = -lluaThreading
-LUA = -llua -lm -ldl 
 
 all : example.bin
 
