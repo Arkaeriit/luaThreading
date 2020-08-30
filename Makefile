@@ -1,19 +1,30 @@
 FLAGS = -Wall -Werror -g
 LUA = -llua -lm -ldl 
 PT = -lpthread
+LIBPATH = /usr/lib64
 
-all : test.bin
-
-test.bin : test.o luaThreading.o
-	gcc test.o luaThreading.o $(FLAGS) $(LUA) $(PT) -o test.bin
-
-test.o : test.c
-	gcc -c test.c $(FLAGS) -o test.o
+all : libluaThreading.so luaThreading.luac
 
 luaThreading.o : luaThreading.c luaThreading.h
-	gcc -c luaThreading.c $(FLAGS) -o luaThreading.o
+	gcc -c -fPIC luaThreading.c $(FLAGS) -o luaThreading.o
+
+libluaThreading.so : luaThreading.o
+	gcc -shared  luaThreading.o $(PT) $(LUA) -o libluaThreading.so
+
+luaThreading.luac : luaThreading.lua
+	luac -o luaThreading.luac luaThreading.lua
+
+install : 
+	mkdir -p $(LIBPATH)/luaThreading
+	cp -f luaThreading.luac $(LIBPATH)/luaThreading
+	cp -f libluaThreading.so $(LIBPATH)
+
+uninstall :
+	rm -rf $(LIBPATH)/luaThreading
+	rm -f $(LIBPATH)/libluaThreading.so
 
 clean :
 	rm -f *.o
-	rm -f *.bin
+	rm -f *.luac
+	rm -f *.so
 

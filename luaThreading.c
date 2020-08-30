@@ -14,7 +14,7 @@ struct lt_threaded_thread{
     pthread_t* thread;
 };
 
-//static functions definitions
+//Static functions definitions
 static int lt_runFunc(lua_State* L);
 static void* lt_threaded(void* args);
 static int lt_closeThread(lua_State* L);
@@ -151,6 +151,10 @@ static void lt_swapElem(lua_State* from, lua_State* to){
 
 void lt_include(lua_State* L){
     luaL_dofile(L, "luaThreading.lua");
+    luaL_dofile(L, "/usr/local/lib/luaThreading/luaThreading.luac");
+    luaL_dofile(L, "/usr/local/lib64/luaThreading/luaThreading.luac");
+    luaL_dofile(L, "/usr/lib/luaThreading/luaThreading.luac");
+    luaL_dofile(L, "/usr/lib64/luaThreading/luaThreading.luac");
     lua_pushcfunction(L, lt_runFunc);
     lua_setglobal(L, "_launchThread");
     lua_pushcfunction(L, lt_closeThread);
