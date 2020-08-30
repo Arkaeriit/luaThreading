@@ -4,7 +4,7 @@ LUATHREAD_INTERNAL_FUNCTION = function()
 end
 
 launchThread = function(func, ...)
-    local args = table.pack(...);
+    local args = table.pack(...)
     if args.n == 0 then
         LUATHREAD_INTERNAL_FUNCTION = function() return func() end
     else
