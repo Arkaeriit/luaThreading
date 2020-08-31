@@ -1,6 +1,7 @@
 FLAGS = -Wall -Werror -g
 PT = -lpthread
 LIBPATH = /usr/lib64
+LIBLUAPATH = /usr/local/lib/lua/5.3
 INCLUDEPATH = /usr/include
 
 all : libluaThreading.so luaThreading.luac
@@ -19,11 +20,13 @@ install :
 	cp -f luaThreading.luac $(LIBPATH)/luaThreading/luaThreading.luac
 	cp -f libluaThreading.so $(LIBPATH)/libluaThreading.so
 	cp -f luaThreading.h $(INCLUDEPATH)/luaThreading.h
+	cp -f libluaThreading.so $(LIBLUAPATH)/luaThreading.so
 
 uninstall :
 	rm -rf $(LIBPATH)/luaThreading
 	rm -f $(LIBPATH)/libluaThreading.so
 	rm -f $(INCLUDEPATH)/luaThreading.h
+	rm -f $(LIBLUAPATH)/luaThreading.so
 
 clean :
 	rm -f *.o

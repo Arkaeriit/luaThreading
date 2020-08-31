@@ -3,16 +3,16 @@
 #include <lualib.h>
 #include <lauxlib.h>
 //Including luaThreading header
-#include <luaThreading.h>
+#include "luaThreading.h"
 
 int main(){
     //Generating a lua state the usual way
     lua_State* L = luaL_newstate();
     luaL_openlibs(L);
     //Making the luaThreading functions available from the created lua state
-    lt_include(L);
+    lt_include(L, "luaThreading");
     //Calling the main function from example.lua
-    luaL_dofile(L, "example.lua");
+    luaL_dofile(L, "exampleEmbedded.lua");
     lua_getglobal(L, "main");
     lua_call(L, 0, 0);
     //Cleaning up

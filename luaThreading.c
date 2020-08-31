@@ -10,7 +10,6 @@
 //Types definitions
 struct lt_threaded_thread{
     lua_State* state;
-    const char* func;
     pthread_t* thread;
 };
 
@@ -23,16 +22,14 @@ static void lt_swapElem(lua_State* from, lua_State* to);
 //Function code
 
 /*
- * Used to create the launchThread lua function which take the name of
- * a function as argument a return a thread object
+ * Used to create the _launchThread function which run
+ * LUATHREAD_GLOBAL_NAME.LUATHREAD_INTERNAL_FUNCTION in a new thread
  */
 static int lt_runFunc(lua_State* L){
-    const char* func = luaL_checkstring(L, -1);
     lua_State* copy = lua_newthread(L);
     //Creating arguments
     struct lt_threaded_thread* lt_thread =  malloc(sizeof(struct lt_threaded_thread));
     lt_thread->state = copy; 
-    lt_thread->func = func;
     //Creating thread
     pthread_t* thread = malloc(sizeof(pthread_t));
 	pthread_create(thread, NULL, lt_threaded, (void *) lt_thread);
@@ -54,8 +51,10 @@ static int lt_runFunc(lua_State* L){
  */
 static void* lt_threaded(void* args){
     struct lt_threaded_thread* lt_args = args;
-    lua_getglobal(lt_args->state, lt_args->func);
-    lua_call(lt_args->state, 0, -1);
+    lua_getglobal(lt_args->state, "LUATHREAD_GLOBAL_NAME");
+    lua_pushstring(lt_args->state, "LUATHREAD_INTERNAL_FUNCTION");
+    lua_gettable(lt_args->state, -2);
+    lua_call(lt_args->state, 0, 1);
     return NULL;
 }    
 
@@ -149,15 +148,42 @@ static void lt_swapElem(lua_State* from, lua_State* to){
     }
 }
 
-void lt_include(lua_State* L){
+/*
+ * Include the librairy under the global name libName
+ */
+void lt_include(lua_State* L, const char* libName){
+    lua_createtable(L, 0, 3);
+    lua_setglobal(L, "LUATHREAD_GLOBAL_NAME");
     luaL_dofile(L, "/usr/local/lib/luaThreading/luaThreading.luac");
     luaL_dofile(L, "/usr/local/lib64/luaThreading/luaThreading.luac");
     luaL_dofile(L, "/usr/lib/luaThreading/luaThreading.luac");
     luaL_dofile(L, "/usr/lib64/luaThreading/luaThreading.luac");
     luaL_dofile(L, "luaThreading.lua");
+    lua_getglobal(L, "LUATHREAD_GLOBAL_NAME");
+    lua_pushstring(L, "_launchThread");
     lua_pushcfunction(L, lt_runFunc);
-    lua_setglobal(L, "_launchThread");
+    lua_settable(L, -3);
+    lua_pushstring(L, "joinThread");
     lua_pushcfunction(L, lt_closeThread);
-    lua_setglobal(L, "joinThread");
+    lua_settable(L, -3);
+    lua_setglobal(L, libName);
+}
+
+static const struct luaL_Reg luaThreading [] = {
+    {"_launchThread", lt_runFunc},
+    {"joinThread", lt_closeThread},
+    {NULL, NULL} /* sentinel */
+};
+
+int luaopen_luaThreading(lua_State* L){
+    luaL_newlib(L, luaThreading);
+    lua_setglobal(L, "LUATHREAD_GLOBAL_NAME");
+    luaL_dofile(L, "/usr/local/lib/luaThreading/luaThreading.luac");
+    luaL_dofile(L, "/usr/local/lib64/luaThreading/luaThreading.luac");
+    luaL_dofile(L, "/usr/lib/luaThreading/luaThreading.luac");
+    luaL_dofile(L, "/usr/lib64/luaThreading/luaThreading.luac");
+    luaL_dofile(L, "luaThreading.lua");
+    lua_getglobal(L, "LUATHREAD_GLOBAL_NAME");
+    return 1;
 }
 

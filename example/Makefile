@@ -1,16 +1,30 @@
 LUA = -llua -lm -ldl 
 FLAGS = -Wall -Werror -g
-LUATHREAD = -lluaThreading
+PT = -lpthread
 
-all : example.bin
+all : exampleEmbedded.bin cleanCopy
 
-example.bin : example.o
-	gcc example.o $(LUATHREAD) $(FLAGS) $(LUA) -o example.bin
+exampleEmbedded.bin : exampleEmbedded.o luaThreading.o
+	gcc exampleEmbedded.o luaThreading.o $(FLAGS) $(LUA) $(PT) -o exampleEmbedded.bin
 
-example.o : example.c
-	gcc -c example.c $(FLAGS) -o example.o
+exampleEmbedded.o : exampleEmbedded.c
+	gcc -c exampleEmbedded.c $(FLAGS) -o exampleEmbedded.o
+
+luaThreading.o : copy
+	gcc -c luaThreading.c $(FLAGS) -o luaThreading.o
+
+copy :
+	cp ../luaThreading.c .
+	cp ../luaThreading.h .
+	cp ../luaThreading.lua .
+
+cleanCopy :
+	rm -f luaThreading.c
+	rm -f luaThreading.h
+	rm -f luaThreading.o
 
 clean :
 	rm -f *.bin
+	rm -f luaThreading.lua
 	rm -f *.o
 
