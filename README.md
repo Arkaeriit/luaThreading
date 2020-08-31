@@ -11,17 +11,20 @@ When creating a thread with launchThread, the Lua state is copied and the desire
 
  ## Example
 ```lua
+local luaThreading = require "luaThreading"
 --launch the function myfunc with myarg as the only argument
-local thread = launchThread(myfunc, myarg)
+local thread = luaThreading.launchThread(myfunc, myarg)
 --wait for the thread to end and get the return value of myfunc
-local result = joinThread(thread)
+local result = luaThreading.joinThread(thread)
 ```
-A more detailed example is to be found in the example folder of this repo
+A more detailed example is to be found in the example folder of this repo, under the name example.lua.
 
 ## Importing the library
-As of now, the only way to import the library is when you are embedding Lua into a C program. In this case, you must have the file luaThreading.h included and you must run the function `lt_include` on your Lua state. Check example/example.c to see how it is done.
+If you have installed it, you can import the library by doing `local luaThreading = require "luaThreading"`.
 
-## Instalation
+Alternatively, if you embed Lua into C, you can follow the makefile and the exampleEmbedded files in the example folder. On the other hand, I personally recommend the use of the require function.
+	
+## Installation
 To install luaThread you must have Lua installed in your system. If so, simply run `make && make install` from the root of this repo and the library will be installed. You can test it by going into the example folder and running `make && ./example.bin`. If the command make in the example folder does not work, you might need to change the first line of the makefile to include the correct flags to link Lua in your system.
 
 ## Limitations
@@ -30,10 +33,9 @@ To install luaThread you must have Lua installed in your system. If so, simply r
 * userdata are treated as lightuserdata
 
 ### Internal function
-LuaThreading relies on three global functions to operate, `_launchThread`, `LUATHREAD_TABLE_DETAIL` and `LUATHREAD_INTERNAL_FUNCTION`. If they are overridden, the library will not work.
+The library relies on a global table, `LUATHREAD_GLOBAL_NAME`. If this object is overridden, the library might not work.
 
 # Roadmap
-* Use a single global table instead of five global functions
-* Make the library available from Lua directly without needing to embed Lua into C.
 * Maybe let functions called from a separate thread return as many values as needed instead of a single one.
+* Get rid of the global table.
 
