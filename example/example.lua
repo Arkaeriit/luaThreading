@@ -1,3 +1,4 @@
+#!/usr/local/bin/lua
 local luaThreading = require "luaThreading"
 
 ----- main function with explaination on how to use luaThreading -----
