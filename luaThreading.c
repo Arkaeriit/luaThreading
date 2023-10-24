@@ -7,7 +7,7 @@
 #include <pthread.h>
 #include <stdbool.h>
 
-#define GLOBAL_TABLE_NAME    "__LUA_THREADING_GLOBAL_CONTEXT"
+#define REGISTRY_TABLE_NAME    "LUA_THREADING_GLOBAL_CONTEXT"
 #define FUNCTION_TABLE_FIELD "__function_table"
 #define MUTEX_FIELD          "__mutex"
 
@@ -51,7 +51,7 @@ static int lt_runFunc(lua_State* L){
     lua_setfield(L, -2, "function");
 
     // Puting function in the global function table
-    lua_getglobal(L, GLOBAL_TABLE_NAME);
+    lua_getfield(L, LUA_REGISTRYINDEX, REGISTRY_TABLE_NAME);
     lua_getfield(L, -1, MUTEX_FIELD);
     pthread_mutex_t* mutex = lua_touserdata(L, -1);
     lua_pop(L, 1);
@@ -68,7 +68,7 @@ static int lt_runFunc(lua_State* L){
     // Reading the function from the global table and pushing it on the stack
     // of the thread
     pthread_mutex_lock(mutex);
-    lua_getglobal(copy, GLOBAL_TABLE_NAME);
+    lua_getfield(copy, LUA_REGISTRYINDEX, REGISTRY_TABLE_NAME);
     lua_getfield(copy, -1, FUNCTION_TABLE_FIELD);
     lua_geti(copy, -1, lt_thread->function_id);
     pthread_mutex_unlock(mutex);
@@ -122,9 +122,10 @@ static int lt_closeThread(lua_State* L){
 }
 
 /*
- * Push the element at the top of a lua_State to an other lua_State
+ * Push an element of a lua_State to the to of an other lua_State
  *  Arguments:
  *      from : The state we take an element from
+ *      index : the position of the element in from
  *      to : the state we put the element on
  *  error:
  *      If the type on the element on the stack can not be determined,
@@ -203,10 +204,12 @@ static const struct luaL_Reg luaThreading [] = {
 };
 
 static void manage_global_context(lua_State* L) {
-    if (lua_getglobal(L, GLOBAL_TABLE_NAME) == LUA_TTABLE) {
+    if (lua_getfield(L, LUA_REGISTRYINDEX, REGISTRY_TABLE_NAME) == LUA_TTABLE) {
         // Context already generated, no need to do it again
+        lua_pop(L, 1);
         return;
     }
+    lua_pop(L, 1);
     // TODO: meta-table to garbage collect with __gc
     lua_createtable(L, 0, 2);
     // Makes a table that is used to store functions to call in thread.
@@ -218,12 +221,12 @@ static void manage_global_context(lua_State* L) {
     pthread_mutex_init(mutex, NULL);
     lua_pushlightuserdata(L, mutex);
     lua_setfield(L, -2, MUTEX_FIELD);
-    lua_setglobal(L, GLOBAL_TABLE_NAME);
+    lua_setfield(L, LUA_REGISTRYINDEX, REGISTRY_TABLE_NAME);
 }
 
 int luaopen_luaThreading(lua_State* L) {
-    manage_global_context(L);
     luaL_newlib(L, luaThreading);
+    manage_global_context(L);
     return 1;
 }
 
