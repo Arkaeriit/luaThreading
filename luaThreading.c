@@ -203,6 +203,16 @@ static const struct luaL_Reg luaThreading [] = {
     {NULL, NULL} /* sentinel */
 };
 
+static int global_gc(lua_State* L) {
+    lua_getfield(L, LUA_REGISTRYINDEX, REGISTRY_TABLE_NAME);
+    lua_getfield(L, -1, MUTEX_FIELD);
+    pthread_mutex_t* mutex = lua_touserdata(L, -1);
+    pthread_mutex_destroy(mutex);
+    free(mutex);
+    lua_pop(L, 2);
+    return 0;
+}
+
 static void manage_global_context(lua_State* L) {
     if (lua_getfield(L, LUA_REGISTRYINDEX, REGISTRY_TABLE_NAME) == LUA_TTABLE) {
         // Context already generated, no need to do it again
@@ -210,7 +220,6 @@ static void manage_global_context(lua_State* L) {
         return;
     }
     lua_pop(L, 1);
-    // TODO: meta-table to garbage collect with __gc
     lua_createtable(L, 0, 2);
     // Makes a table that is used to store functions to call in thread.
     lua_createtable(L, 10, 0);
@@ -221,6 +230,11 @@ static void manage_global_context(lua_State* L) {
     pthread_mutex_init(mutex, NULL);
     lua_pushlightuserdata(L, mutex);
     lua_setfield(L, -2, MUTEX_FIELD);
+    // Metatable to free used memory
+    lua_createtable(L, 0, 1);
+    lua_pushcfunction(L, global_gc);
+    lua_setfield(L, -2, "__gc");
+    lua_setmetatable(L, -2);
     lua_setfield(L, LUA_REGISTRYINDEX, REGISTRY_TABLE_NAME);
 }
 
