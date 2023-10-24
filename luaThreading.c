@@ -33,6 +33,71 @@ static void lt_swapElem(lua_State* from, int index, lua_State* to);
 //Function code
 
 /*
+ * This function prepares everything to access the global list of luaThreading.
+ * It gets the global mutex and takes it, put the global list on top of the
+ * stack and return the mutex.
+ */
+static pthread_mutex_t* prepare_global_list_access(lua_State* L) {
+    lua_getfield(L, LUA_REGISTRYINDEX, REGISTRY_TABLE_NAME);
+    lua_getfield(L, -1, MUTEX_FIELD);
+    pthread_mutex_t* mutex = lua_touserdata(L, -1);
+    lua_pop(L, 1);
+    pthread_mutex_lock(mutex);
+    lua_getfield(L, -1, FUNCTION_TABLE_FIELD);
+    int index = lua_gettop(L);
+    lua_rotate(L, index-1, 1);
+    lua_pop(L, 1);
+    return mutex;
+}
+
+/*
+ * This function puts the element on top of the Lua stack in the global list
+ * at the relevent index and update the index.
+ * Return the used index.
+ */
+static int add_to_global_list(lua_State* L) {
+    int top_of_the_stack = lua_gettop(L);
+    pthread_mutex_t* mutex = prepare_global_list_access(L);
+    lua_getfield(L, -1, INDEX_FIELD);
+    int used_index = lua_tointeger(L, -1);
+    lua_pushvalue(L, top_of_the_stack);
+    lua_settable(L, -3);
+    lua_pushinteger(L, used_index+1);
+    lua_setfield(L, -2, INDEX_FIELD);
+    lua_pop(L, 1);
+    pthread_mutex_unlock(mutex);
+    return used_index;
+}
+
+/*
+ * This function puts on top of the stack the element from the global list at
+ * the given index.
+ */
+static void get_from_global_list(lua_State* L, int index) {
+
+    pthread_mutex_t* mutex = prepare_global_list_access(L);
+    lua_pushinteger(L, index);
+    lua_gettable(L, -2);
+    pthread_mutex_unlock(mutex);
+    int top_of_the_stack = lua_gettop(L);
+    lua_rotate(L, top_of_the_stack-1, 1);
+    lua_pop(L, 1);
+}
+
+/*
+ * This function replace the value at the given index of the global list
+ * with a nil.
+ */
+static void clear_from_global(lua_State* L, int index) {
+    pthread_mutex_t* mutex = prepare_global_list_access(L);
+    lua_pushinteger(L, index);
+    lua_pushnil(L);
+    lua_settable(L, -3);
+    lua_pop(L, 1);
+    pthread_mutex_unlock(mutex);
+}
+
+/*
  * This function runs the function given as argument in a new thread and return
  * a thread handle. The thread handle if a userdata with the following elements:
  *  - A lt_thread_ctx struct in a lightuserdata
@@ -54,29 +119,13 @@ static int lt_runFunc(lua_State* L){
     lua_setiuservalue(L, -2, UD_FNC_INDEX);
 
     // Puting function in the global function table
-    lua_getfield(L, LUA_REGISTRYINDEX, REGISTRY_TABLE_NAME);
-    lua_getfield(L, -1, MUTEX_FIELD);
-    pthread_mutex_t* mutex = lua_touserdata(L, -1);
-    lua_pop(L, 1);
-    pthread_mutex_lock(mutex);
-    lua_getfield(L, -1, FUNCTION_TABLE_FIELD);
-    lua_getfield(L, -1, INDEX_FIELD);
-    int used_index = lua_tointeger(L, -1);
     lua_pushvalue(L, 1);
-    lua_settable(L, -3);
-    lua_pushinteger(L, used_index+1);
-    lua_setfield(L, -2, INDEX_FIELD);
-    lua_pop(L, 2);
-    pthread_mutex_unlock(mutex);
-    lt_thread->function_id = used_index;
+    lt_thread->function_id = add_to_global_list(L);
+    lua_pop(L, 1);
 
     // Reading the function from the global table and pushing it on the stack
     // of the thread
-    pthread_mutex_lock(mutex);
-    lua_getfield(copy, LUA_REGISTRYINDEX, REGISTRY_TABLE_NAME);
-    lua_getfield(copy, -1, FUNCTION_TABLE_FIELD);
-    lua_geti(copy, -1, lt_thread->function_id);
-    pthread_mutex_unlock(mutex);
+    get_from_global_list(copy, lt_thread->function_id);
 
     // Creating arguments
     for (int i=0; i<num_args-1; i++) {
@@ -109,17 +158,7 @@ static void* lt_threaded(void* args){
     lua_call(lt_args->state, lt_args->number_of_arguments, 1);
 
     // Remove function from the global list
-    lua_getfield(lt_args->state, LUA_REGISTRYINDEX, REGISTRY_TABLE_NAME);
-    lua_getfield(lt_args->state, -1, MUTEX_FIELD);
-    pthread_mutex_t* mutex = lua_touserdata(lt_args->state, -1);
-    lua_pop(lt_args->state, 1);
-    pthread_mutex_lock(mutex);
-    lua_getfield(lt_args->state, -1, FUNCTION_TABLE_FIELD);
-    lua_pushinteger(lt_args->state, lt_args->function_id);
-    lua_pushnil(lt_args->state);
-    lua_settable(lt_args->state, -3);
-    lua_pop(lt_args->state, 2);
-    pthread_mutex_unlock(mutex);
+    clear_from_global(lt_args->state, lt_args->function_id);
 
     return NULL;
 }    
