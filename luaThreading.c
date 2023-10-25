@@ -12,9 +12,9 @@
 #define MUTEX_FIELD          "__mutex"
 #define INDEX_FIELD          "index"
 
-#define UD_CTX_INDEX   1
-#define UD_FNC_INDEX   2
-#define UD_STATE_INDEX 3
+#define CTX_FIELD      "__ctx"
+#define FUNCTION_FIELD "__function"
+#define STATE_FIELD    "__state"
 
 //Types definitions
 struct lt_thread_ctx {
@@ -107,19 +107,19 @@ static void clear_from_global(lua_State* L, int index) {
  */
 static int lt_runFunc(lua_State* L){
     int num_args = lua_gettop(L);
-    lua_newuserdatauv(L, 0, 3);
+    lua_createtable(L, 0, 4);
     lua_State* copy = lua_newthread(L);
-    lua_setiuservalue(L, -2, UD_STATE_INDEX);
+    lua_setfield(L, -2, STATE_FIELD);
     struct lt_thread_ctx* lt_thread =  malloc(sizeof(struct lt_thread_ctx));
     lt_thread->state = copy; 
     lt_thread->number_of_arguments = num_args-1;
 
     // Preparing the return value. This value is a table that contains the
-    // Puting function in return value
+    // Putting function in return value
     lua_pushvalue(L, 1);
-    lua_setiuservalue(L, -2, UD_FNC_INDEX);
+    lua_setfield(L, -2, FUNCTION_FIELD);
 
-    // Puting function in the global function table
+    // Putting function in the global function table
     lua_pushvalue(L, 1);
     lt_thread->function_id = add_to_global_list(L);
     lua_pop(L, 1);
@@ -137,10 +137,14 @@ static int lt_runFunc(lua_State* L){
     pthread_t* thread = malloc(sizeof(pthread_t));
 	pthread_create(thread, NULL, lt_threaded, (void *) lt_thread);
 
-    // Puting the thread in the context
+    // Putting the thread in the context
     lt_thread->thread = thread;
     lua_pushlightuserdata(L, lt_thread);
-    lua_setiuservalue(L, -2, UD_CTX_INDEX);
+    lua_setfield(L, -2, CTX_FIELD);
+
+    // Adding the join method to the thread
+    lua_pushcfunction(L, lt_closeThread);
+    lua_setfield(L, -2, "join");
 
     // Store the Lua thread handle into the global list to ensure that it will
     // not be garbage collected. This will cause memory leak if you spawn a lot
@@ -172,12 +176,12 @@ static void* lt_threaded(void* args){
 }    
 
 /*
- * Used to create the joinThread lua function. Take a thread as an
+ * Used to create the join thread method. Take a thread as an
  * argument, join it and close the lua_State it ran on.
  * Return the result of the function callded when lauching the thread.
  */
 static int lt_closeThread(lua_State* L){
-    lua_getiuservalue(L, -1, UD_CTX_INDEX);
+    lua_getfield(L, -1, CTX_FIELD);
     struct lt_thread_ctx* lt_thread = lua_touserdata(L, -1);
     // Closing the thread
     pthread_join(*(lt_thread->thread), NULL);
@@ -312,7 +316,6 @@ static int global_gc(lua_State* L) {
 
 static const struct luaL_Reg luaThreading [] = {
     {"launchThread", lt_runFunc},
-    {"joinThread", lt_closeThread},
     {"newMutex", lt_newMutex},
     {NULL, NULL} /* sentinel */
 };

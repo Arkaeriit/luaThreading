@@ -8,7 +8,7 @@ main = function()
     local thread = luaThreading.launchThread(myprint)
     
     -- Waiting for the thread to be finished
-    luaThreading.joinThread(thread)
+    thread:join()
 
     -- Launching multiple threads in the same time
     local threads = {}
@@ -18,23 +18,23 @@ main = function()
     
     -- Joining the multiples threads
     for i=1,5 do
-        luaThreading.joinThread(threads[i])
+        threads[i]:join()
     end
 
     -- Launching a function with arguments in a thread
     thread = luaThreading.launchThread(mysum, 6, 7, 10)
 
     -- Retrieving the result of a function launched in a thread
-    local result = luaThreading.joinThread(thread)
+    local result = thread:join()
     print(result)
 
     -- Performing operations on tables in threads
     local arr = {1, 2, 3}
     thread = luaThreading.launchThread(mytableop, arr)
     print(thread)
-    arr = luaThreading.joinThread(thread)
+    arr = thread:join()
     thread = luaThreading.launchThread(mytableop, arr)
-    luaThreading.joinThread(thread)
+    thread:join()
 
     -- Synchronizing threads with a mutex
     local mutex = luaThreading.newMutex()
@@ -42,7 +42,7 @@ main = function()
         threads[i] = luaThreading.launchThread(mysyncedfunc, i, mutex)
     end
     for i=1,3 do
-        luaThreading.joinThread(threads[i])
+        threads[i]:join()
     end
 end
 
