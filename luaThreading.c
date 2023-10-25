@@ -224,44 +224,27 @@ static void lt_swapElem(lua_State* from, int index, lua_State* to){
         case LUA_TSTRING:
             lua_pushstring(to, lua_tostring(from, index));
             break;
-        case LUA_TUSERDATA:
         case LUA_TLIGHTUSERDATA:
             lua_pushlightuserdata(to, lua_touserdata(from, index));
             break;
-        /*case LUA_TTHREAD: //Invalid: must find a good way to do so
-            lua_pushthread(to, lua_tothread(from, index));
-            break;*/
         case LUA_TFUNCTION:
             if(lua_iscfunction(from, index)){
                 lua_CFunction func = lua_tocfunction(from, index);
                 lua_pushcfunction(to, func);
                 break;
             } else {
-                printf("Hmmm...");
+                // Nothing done here, Lua functions are managed like other
+                // complex objects on the case bellow.
             }
-        /*case LUA_TTABLE: // TODO
-            lua_getglobal(from, "LUATHREAD_TABLE_DETAIL");
-            lua_insert(from, -2);
-            lua_call(from, 1, 1);
-            lua_geti(from, -1, 0);
-            int numberOfKeys = lua_tointeger(from, -1);
+        case LUA_TTHREAD:
+        case LUA_TTABLE:
+        case LUA_TUSERDATA:
+            lua_pushvalue(from, index);
+            int value_index = add_to_global_list(from);
             lua_pop(from, 1);
-            lua_createtable (to, numberOfKeys, numberOfKeys);
-            for(int i=1; i<=numberOfKeys; i++){
-                lua_geti(from, -1, i);
-                //putting the key in the receiving table
-                lua_pushstring(from, "key");
-                lua_gettable(from, -2); 
-                lt_swapElem(from, to);
-                //putting the value
-                lua_pushstring(from, "value");
-                lua_gettable(from, -3); 
-                lt_swapElem(from, to);
-                //associating and cleaning
-                lua_settable(to, -3);
-                lua_pop(from, 3);
-            }
-            break;*/
+            get_from_global_list(to, value_index);
+            clear_from_global(to, value_index);
+            break;
         default:
             fprintf(stderr, "Error: unknow or invalid type on top of a stack.\n");
     }
