@@ -22,6 +22,7 @@ struct lt_thread_ctx {
     pthread_t* thread;
     int number_of_arguments; // Number of argument that will be given to the function
     int function_id; // Id of the function to call in the global list
+    int ctx_id; // Id of the Lua thread handle in the global list
 };
 
 //Static functions definitions
@@ -140,6 +141,13 @@ static int lt_runFunc(lua_State* L){
     lt_thread->thread = thread;
     lua_pushlightuserdata(L, lt_thread);
     lua_setiuservalue(L, -2, UD_CTX_INDEX);
+
+    // Store the Lua thread handle into the global list to ensure that it will
+    // not be garbage collected. This will cause memory leak if you spawn a lot
+    // of threads without joining them, but if you do that, you already messed
+    // up.
+    int handle_id = add_to_global_list(L);
+    lt_thread->ctx_id = handle_id;
     return 1;
 }
 
@@ -171,11 +179,13 @@ static void* lt_threaded(void* args){
 static int lt_closeThread(lua_State* L){
     lua_getiuservalue(L, -1, UD_CTX_INDEX);
     struct lt_thread_ctx* lt_thread = lua_touserdata(L, -1);
-    //Closing the thread
+    // Closing the thread
     pthread_join(*(lt_thread->thread), NULL);
-    //Puting the result value
+    // Putting the result value
     lt_swapElem(lt_thread->state, -1, L);
-    //Freeing everyone
+    // Clear the context from the global table
+    clear_from_global(L, lt_thread->ctx_id);
+    // Freeing everyone
     free(lt_thread->thread);
     free(lt_thread);
     return 1;
