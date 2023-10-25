@@ -206,12 +206,12 @@ static void swap_elem(lua_State* from, int index, lua_State* to){
                 lua_pushcfunction(to, func);
                 break;
             } else {
-                // Nothing done here, Lua functions are managed like other
-                // complex objects on the case bellow.
+                goto lua_function;
             }
         case LUA_TTHREAD:
         case LUA_TTABLE:
         case LUA_TUSERDATA:
+        lua_function:
             lua_pushvalue(from, index);
             int value_index = add_to_global_list(from);
             lua_pop(from, 1);
