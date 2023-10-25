@@ -1,11 +1,11 @@
 #!/usr/local/bin/lua
-local luaThreading = require "luaThreading"
+local luathreading = require "luathreading"
 
------ main function with explaination on how to use luaThreading -----
+----- main function with explaination on how to use luathreading -----
 
 main = function()
     -- Launching the function myprint in a thread
-    local thread = luaThreading.launchThread(myprint)
+    local thread = luathreading.launch_thread(myprint)
     
     -- Waiting for the thread to be finished
     thread:join()
@@ -13,7 +13,7 @@ main = function()
     -- Launching multiple threads in the same time
     local threads = {}
     for i=1,5 do
-        threads[i] = luaThreading.launchThread(myprint)
+        threads[i] = luathreading.launch_thread(myprint)
     end
     
     -- Joining the multiples threads
@@ -22,7 +22,7 @@ main = function()
     end
 
     -- Launching a function with arguments in a thread
-    thread = luaThreading.launchThread(mysum, 6, 7, 10)
+    thread = luathreading.launch_thread(mysum, 6, 7, 10)
 
     -- Retrieving the result of a function launched in a thread
     local result = thread:join()
@@ -30,16 +30,16 @@ main = function()
 
     -- Performing operations on tables in threads
     local arr = {1, 2, 3}
-    thread = luaThreading.launchThread(mytableop, arr)
+    thread = luathreading.launch_thread(mytableop, arr)
     print(thread)
     arr = thread:join()
-    thread = luaThreading.launchThread(mytableop, arr)
+    thread = luathreading.launch_thread(mytableop, arr)
     thread:join()
 
     -- Synchronizing threads with a mutex
-    local mutex = luaThreading.newMutex()
+    local mutex = luathreading.new_mutex()
     for i=1,3 do
-        threads[i] = luaThreading.launchThread(mysyncedfunc, i, mutex)
+        threads[i] = luathreading.launch_thread(mysyncedfunc, i, mutex)
     end
     for i=1,3 do
         threads[i]:join()
