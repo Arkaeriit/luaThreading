@@ -35,6 +35,15 @@ main = function()
     arr = luaThreading.joinThread(thread)
     thread = luaThreading.launchThread(mytableop, arr)
     luaThreading.joinThread(thread)
+
+    -- Synchronizing threads with a mutex
+    local mutex = luaThreading.newMutex()
+    for i=1,3 do
+        threads[i] = luaThreading.launchThread(mysyncedfunc, i, mutex)
+    end
+    for i=1,3 do
+        luaThreading.joinThread(threads[i])
+    end
 end
 
 ----- Various functions called by the main one -----
@@ -77,6 +86,15 @@ mytableop = function(arr)
         ret[i] = arr[i] * 2
     end
     return ret
+end
+
+-- Locks a mutex and print some messages
+mysyncedfunc = function(thead_name, mutex)
+    mutex:lock()
+    print("Starting thread "..tostring(thead_name))
+    mysillysleep()
+    print("Ending thread "..tostring(thead_name))
+    mutex:unlock()
 end
 
 main()

@@ -250,21 +250,72 @@ static void lt_swapElem(lua_State* from, int index, lua_State* to){
     }
 }
 
-static const struct luaL_Reg luaThreading [] = {
-    {"launchThread", lt_runFunc},
-    {"joinThread", lt_closeThread},
-    {NULL, NULL} /* sentinel */
-};
-
-static int global_gc(lua_State* L) {
-    lua_getfield(L, LUA_REGISTRYINDEX, REGISTRY_TABLE_NAME);
+/*
+ * Frees the memory used by a mutex.
+ */
+static int del_mutex(lua_State* L) {
     lua_getfield(L, -1, MUTEX_FIELD);
     pthread_mutex_t* mutex = lua_touserdata(L, -1);
     pthread_mutex_destroy(mutex);
     free(mutex);
-    lua_pop(L, 2);
+    lua_pop(L, 1);
     return 0;
 }
+
+/*
+ * Two functions to lock and unlock a mutex.
+ */
+static int lock_mutex(lua_State* L) {
+    lua_getfield(L, -1, MUTEX_FIELD);
+    pthread_mutex_t* mutex = lua_touserdata(L, -1);
+    pthread_mutex_lock(mutex);
+    lua_pop(L, 1);
+    return 0;
+}
+static int unlock_mutex(lua_State* L) {
+    lua_getfield(L, -1, MUTEX_FIELD);
+    pthread_mutex_t* mutex = lua_touserdata(L, -1);
+    pthread_mutex_unlock(mutex);
+    lua_pop(L, 1);
+    return 0;
+}
+
+/*
+ * Creates a new mutex and give in to the Lua space. The mutex can be taken,
+ * released, and is cleaned when garbage collected.
+ */
+static int lt_newMutex(lua_State* L) {
+    lua_createtable(L, 0, 3);
+    // Generate actual mutex
+    pthread_mutex_t* mutex = malloc(sizeof(pthread_mutex_t));
+    pthread_mutex_init(mutex, NULL);
+    lua_pushlightuserdata(L, mutex);
+    lua_setfield(L, -2, MUTEX_FIELD);
+    // Add garbage collection
+    lua_createtable(L, 0, 1);
+    lua_pushcfunction(L, del_mutex);
+    lua_setfield(L, -2, "__gc");
+    lua_setmetatable(L, -2);
+    // Add lock and unlock methods
+    lua_pushcfunction(L, lock_mutex);
+    lua_setfield(L, -2, "lock");
+    lua_pushcfunction(L, unlock_mutex);
+    lua_setfield(L, -2, "unlock");
+    return 1;
+}
+
+static int global_gc(lua_State* L) {
+    lua_getfield(L, LUA_REGISTRYINDEX, REGISTRY_TABLE_NAME);
+    del_mutex(L);
+    return 0;
+}
+
+static const struct luaL_Reg luaThreading [] = {
+    {"launchThread", lt_runFunc},
+    {"joinThread", lt_closeThread},
+    {"newMutex", lt_newMutex},
+    {NULL, NULL} /* sentinel */
+};
 
 static void manage_global_context(lua_State* L) {
     if (lua_getfield(L, LUA_REGISTRYINDEX, REGISTRY_TABLE_NAME) == LUA_TTABLE) {
