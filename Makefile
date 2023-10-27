@@ -1,4 +1,4 @@
-CFLAGS := -Wall -Wextra
+CFLAGS += -Wall -Wextra
 ifdef DEV
 CFLAGS += -g -Werror
 else
