@@ -9,7 +9,7 @@ This library lets you easily do multi-threading in Lua.
 ```lua
 local luathreading = require "luathreading"
 --launch the function myfunc with myarg as the only argument
-local thread = luathreading.launchi_thread(myfunc, myarg)
+local thread = luathreading.launch_thread(myfunc, myarg)
 --wait for the thread to end and get the return value of myfunc
 local result = thread:join()
 ```
@@ -30,7 +30,7 @@ When the handle to a thread is lost, the thread will still continue to run. But 
 
 When giving values as argument to a new thread or getting return values from a thread, nil, number, booleans, strings, light userdata, and C functions are exchanged by value while lua functions, threads, tables, and userdata are exchanged by reference.
 
-## Mutexes
+### Mutexes
 
 To synchronize threads or protecting resources used by multiple threads, Lua Threading can generate mutexes with the `new_mutex` function. Those mutexes have `lock` and `unlock` method and are generated in the unlocked state.
 
